@@ -15,48 +15,37 @@ export default {
   },
   actions: {
     async login(context, payload) {
-      const res = await fetch(
-        'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAL7QfJFfLyeHWGmYmpuYdTOCDk25xvv_s',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            email: payload.email,
-            password: payload.pass,
-            returnSecureToken: true
-          })
-        }
-      );
+      return context.dispatch('auth', { ...payload, mode: 'login' });
+    },
+    async signup(context, payload) {
+      return context.dispatch('auth', { ...payload, mode: 'signup' });
+    },
+    async auth(context, payload) {
+      const mode = payload.mode;
+      let url =
+        'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAL7QfJFfLyeHWGmYmpuYdTOCDk25xvv_s';
+      if (mode === 'signup') {
+        url =
+          'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyAL7QfJFfLyeHWGmYmpuYdTOCDk25xvv_s';
+      }
+
+      const res = await fetch(url, {
+        method: 'POST',
+        body: JSON.stringify({
+          email: payload.email,
+          password: payload.pass,
+          returnSecureToken: true
+        })
+      });
 
       const data = await res.json();
 
       if (!res.ok) {
         throw new Error(data.error.message || 'Failed to authanticate.');
       }
-      context.commit('setUser', {
-        token: data.idToken,
-        userId: data.localId,
-        tokenExpiration: data.expiresIn
-      });
-    },
-    async signup(context, payload) {
-      const res = await fetch(
-        'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyAL7QfJFfLyeHWGmYmpuYdTOCDk25xvv_s',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            email: payload.email,
-            password: payload.pass,
-            returnSecureToken: true
-          })
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) {
-        const error = new Error(
-          data.error.message || 'Failed to authanticate.'
-        );
-        throw error;
-      }
+
+      localStorage.setItem('token', data.idToken);
+      localStorage.setItem('userId', data.userId);
 
       context.commit('setUser', {
         token: data.idToken,
@@ -64,7 +53,18 @@ export default {
         tokenExpiration: data.expiresIn
       });
     },
-    async logout(context) {
+    autoLogin(context) {
+      const token = localStorage.getItem('token');
+      const userId = localStorage.getItem('userId');
+      if (token && userId) {
+        context.commit('setUser', {
+          token,
+          userId,
+          tokenExpiration: null
+        });
+      }
+    },
+    logout(context) {
       context.commit('setUser', {
         token: null,
         userId: null,
