@@ -76,6 +76,9 @@ export default {
         } else {
           await this.$store.dispatch('signup', actPayload);
         }
+
+        const redirect = "/" + (this.$route.query.redirect || 'coaches');
+        this.$router.replace(redirect)
       } catch (error) {
         this.error = error.message || 'Failed to login.try later.';
       }
