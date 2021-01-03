@@ -63,6 +63,13 @@ export default {
         userId: data.localId,
         tokenExpiration: data.expiresIn
       });
+    },
+    async logout(context) {
+      context.commit('setUser', {
+        token: null,
+        userId: null,
+        tokenExpiration: null
+      });
     }
   },
   getters: {
@@ -73,7 +80,7 @@ export default {
       return state.token;
     },
     isAuthed(state) {
-      return !!state.token
+      return !!state.token;
     }
   }
 };
